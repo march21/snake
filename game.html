@@ -1,0 +1,189 @@
+<canvas id="myCanvas" width="500" height="500">
+</canvas>
+
+<script type="text/javascript">
+    var maxHeight = 400,
+        maxWidth = 400,
+        startingPosX = 0,
+        startingPosY = 0,
+        currentDirection = 'RIGHT',
+        speed = 10,
+        difficulty = 1,
+        score = 0,
+        mainLoop;
+
+    function getContext() {
+        var canvas = document.getElementById("myCanvas");
+        return canvas.getContext("2d");
+    }
+
+    var background = {
+        x: 100,
+        y: 100,
+        width: 400,
+        height: 400,
+        draw: function (ctx) {
+            ctx.strokeRect(this.x, this.y, this.width, this.height);
+        }
+    };
+
+    var snake = {
+        getX: function() {
+            return this.x + background.x;
+        },
+        getY: function() {
+            return this.y + background.y;
+        },
+        x: startingPosX,
+        y: startingPosY,
+        length: 10,
+        width: 10,
+        draw: function (ctx) {
+            ctx.fillStyle = 'red';
+            ctx.fillRect(this.getX(), this.getY(),
+                this.length, this.width);
+        },
+        moveLeft: function (value) {
+            this.x = this.x - value;
+        },
+        moveRight: function (value) {
+            this.x = this.x + value;
+        },
+        moveUp: function (value) {
+            this.y = this.y - value;
+        },
+        moveDown: function (value) {
+            this.y = this.y + value;
+        },
+        move: function (direction) {
+            switch (direction) {
+                case 'UP':
+                    this.moveUp(speed * difficulty);
+                    break;
+                case 'DOWN':
+                    this.moveDown(speed * difficulty);
+                    break;
+                case 'LEFT':
+                    this.moveLeft(speed * difficulty);
+                    break;
+                case 'RIGHT':
+                    this.moveRight(speed * difficulty);
+                    break;
+                default:
+                    this.move(currentDirection);
+            }
+        }
+    }
+
+    var fruit = {
+        x: startingPosX,
+        y: startingPosY,
+        getX: function() {
+            return this.x + background.x;
+        },
+        getY: function() {
+            return this.y + background.y;
+        },
+        radius: 10,
+            draw: function (ctx) {
+            ctx.beginPath();
+            ctx.arc(this.getX(), this.getY(), this.radius / 2 , 0, 2 * Math.PI);
+            ctx.fillStyle = 'green';
+            ctx.fill();
+        }
+    }
+
+    function randomSpawn() {
+        var ctx = getContext();
+        var min = 10 ;
+        var max = 400;
+        var randomX = Math.round(Math.random() * (+max - +min) + +min);
+        var randomY = Math.round(Math.random() * (+max - +min) + +min);
+        // Is it out of bounds ?
+        if (randomX  < 10) {
+            randomX = 10;
+        }
+        if (randomX > 390) {
+            randomX = 390;
+        }
+        if (randomY > 390) {
+            randomY = 390;
+        }
+        if (randomY < 10) {
+            randomY = 10;
+        }
+
+        fruit.x = randomX;
+        fruit.y = randomY;
+    }
+
+    function reset() {
+        snake.x = startingPosX;
+        snake.y = startingPosY;
+        randomSpawn();
+        currentDirection = 'RIGHT';
+        score = 0;
+    }
+
+    function setMainLoop() {
+        mainLoop = window.setInterval(function () {
+            var ctx = getContext();
+            ctx.clearRect(0, 0, 500, 500);
+            ctx.font = "Open Sans";
+            ctx.fillText("Score :"+ score, 10, 50);
+            background.draw(ctx);
+            snake.draw(ctx);
+            snake.move(currentDirection);
+            fruit.draw(ctx);
+            if (snake.getX() > maxWidth + background.x
+                || snake.getY() > maxHeight + background.y
+                || snake.getX() < background.x 
+                || snake.getY() < background.y) {
+                console.log('you lost');
+                clearInterval(mainLoop);
+            }
+            if(detectCollision()){
+                console.log("Got ya!");
+                score++;
+                randomSpawn();
+            }
+        }, 50)
+    }
+
+
+function detectCollision() {
+    // Detect collision with the fruit
+    var DeltaX = fruit.getX() - Math.max(snake.getX(), Math.min(fruit.getX(), snake.getX() + snake.width));
+    var DeltaY = fruit.getY() - Math.max(snake.getY(), Math.min(fruit.getY(), snake.getY() + snake.length));
+    return (DeltaX * DeltaX + DeltaY * DeltaY) < (fruit.radius * fruit.radius);
+}
+
+    window.addEventListener('keydown', function (event) {
+        var key = event.key;
+        switch (key) {
+            case 'ArrowUp':
+                currentDirection = 'UP';
+                break;
+            case 'ArrowDown':
+                currentDirection = 'DOWN';
+                break;
+            case 'ArrowLeft':
+                currentDirection = 'LEFT';
+                break;
+            case 'ArrowRight':
+                currentDirection = 'RIGHT';
+                break;
+            case 'r':
+                reset();
+                clearInterval(mainLoop);
+                setMainLoop();
+            default:
+                break;
+
+        }
+    });
+    
+    randomSpawn();
+    setMainLoop();
+
+</script>
